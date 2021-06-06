@@ -1,0 +1,158 @@
+<include file="Public:header"/>
+<!--主页面-->
+<div id="main-content" class="content">
+    <ul class="breadcrumb">
+        <li class="active">添加企业</li>
+    </ul>
+    <div class="page-header clearfix">
+        <h3>企业</h3>
+        <ul class="nav nav-tabs">    
+            <li>
+                <a href="{:U('Company/companylist')}">列表</a>
+            </li>
+            <li class="active">
+                <a href="{:U('Company/addcompany')}">新加</a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="content-box-content">
+        <form action="{:U('Company/addcompany')}" method="post" class="form-horizontal" role="form">
+            <div class="form-group">
+                <label for="name" class="col-sm-3 control-label">公司名</label>
+                <div class="col-sm-9">
+                  <input type="text" class="form-control" id="name" name="name">
+                </div>
+            </div>   
+
+            <div class="form-group">
+                <label for="address" class="col-sm-3 control-label">地址</label>
+                <div class="col-sm-9">
+                  <input type="text" class="form-control" id="address" name="address">
+                </div>
+            </div>
+  
+
+            <div class="form-group">
+                <label class="col-sm-3 control-label">logo</label>
+                <div class="col-sm-3">
+                    <input type="file" name="head_pic_upload"/>
+                </div>
+                <div  class="col-sm-6" id="imgPreviewMore">
+
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="people" class="col-sm-3 control-label">联系人</label>
+                <div class="col-sm-9">
+                  <input type="text" class="form-control" id="people" name="people">
+                </div>
+            </div>
+
+
+            <div class="form-group">
+                <label for="tel" class="col-sm-3 control-label">电话</label>
+                <div class="col-sm-9">
+                  <input type="text" class="form-control" id="tel" name="tel">
+                </div>
+            </div>
+
+
+            <div class="form-group">
+                <label for="position" class="col-sm-3 control-label">职位</label>
+                <div class="col-sm-9">
+                  <input type="text" class="form-control" id="position" name="position">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="remark" class="col-sm-3 control-label">备注</label>
+                <div class="col-sm-9">
+                  <input type="text" class="form-control" id="remark" name="remark">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="content" class="col-sm-3 control-label">介绍：</label>
+                <div class="col-sm-9">
+                    <textarea name="content" class="form-control" id="content" style="width:auto;height:300px;visibility:hidden;" ></textarea>
+                </div>
+            </div>
+
+            
+            <div class="form-group">
+                <div class="col-sm-offset-3 col-sm-9">
+                  <button type="submit" class="btn btn-default btn-primary">确认添加</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<!--主页面 end-->
+<include file="Public:footer"/>
+<script type="text/javascript">
+    /**触发上传头像方法*/
+    $("input[name='head_pic_upload']").on('change',function(){
+        var filesize = this.files[0].size;
+        if (filesize > 10000*1024) {
+            alert("请上传大小在500k以下的图片");
+            return false;
+        }
+        var files = this.files;
+        console.log(files);
+        for(var i=0;files.length;i++){
+            var picname = files[i].name;
+            var reader = new FileReader();
+            reader.onload = function(e){
+                var src = e.target.result;
+                $.ajax({
+                    type:"post",
+                    url:"{:U('Meet/uploadPic')}",
+                    data: {"pic":src,"pic_name":picname},
+                    dataType : "json",
+                    success : function(data){
+                        if(data['flag'] == "success"){
+                            $("#imgPreviewMore").append(" <div class='parents'><div class='one_del'>[-]</div><input type='hidden' value='"+data['data']['path']+"' name='logo'/>"+
+                                    "<div><img src='"+data['data']['path']+"' style='width: 150px;'></div></div>");
+                            bindClick();
+                        }
+                    }
+                });
+            }
+            reader.readAsDataURL(files[i]);
+        }
+    });
+    /**删除头像方法*/
+    function bindClick() {
+        $(".one_del").off("click");
+        $(".one_del").click(function () {
+            $(this).parent().remove();
+        })
+    }
+    bindClick();
+
+</script>
+
+<script src="__WEBPUBLIC__/Common/kindeditor/kindeditor-min.js"></script>
+<script src="__WEBPUBLIC__/Common/kindeditor/lang/zh_CN.js"></script>
+<script>
+    var editor;
+    KindEditor.ready(function(K) {
+        editor = K.create('textarea[name="content"]', {
+            resizeType : 1,
+            uploadJson : '__WEBPUBLIC__/Common/kindeditor/php/upload_json.php',
+            fileManagerJson :
+                    '__WEBPUBLIC__/Common/kindeditor/php/file_manager_json.php',
+            allowPreviewEmoticons : false,
+            items:[
+                'source', '|', 'undo', 'redo', '|', 'cut', 'copy','|', 'justifyleft',
+                'justifycenter', 'justifyright',
+                'justifyfull', 'clearhtml', 'selectall', '|', 'formatblock',
+                'fontname', 'fontsize', '|', 'forecolor',
+                'hilitecolor', 'bold', 'italic', 'underline', 'strikethrough','image','multiimage'
+            ],
+            afterBlur:function(){this.sync();}
+        });
+    });
+</script>
