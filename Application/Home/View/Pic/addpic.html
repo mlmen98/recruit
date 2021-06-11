@@ -1,0 +1,82 @@
+<include file="Public:header"/>
+<!--主页面-->
+<div id="main-content" class="content">
+    <ul class="breadcrumb">
+        <li class="active">添加企业</li>
+    </ul>
+    <div class="page-header clearfix">
+        <h3>企业</h3>
+        <ul class="nav nav-tabs">    
+            <li>
+                <a href="{:U('Pic/piclist')}">列表</a>
+            </li>
+            <li class="active">
+                <a href="{:U('Pic/addpic')}">新加</a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="content-box-content">
+        <form action="{:U('Pic/addpic')}" method="post" class="form-horizontal" role="form">
+            <div class="form-group">
+                <label class="col-sm-3 control-label">广告图</label>
+                <div class="col-sm-3">
+                    <input type="file" name="head_pic_upload"/>
+                </div>
+                <div  class="col-sm-6" id="imgPreviewMore">
+
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <div class="col-sm-offset-3 col-sm-9">
+                  <button type="submit" class="btn btn-default btn-primary">确认添加</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<!--主页面 end-->
+<include file="Public:footer"/>
+<script type="text/javascript">
+    /**触发上传头像方法*/
+    $("input[name='head_pic_upload']").on('change',function(){
+        var filesize = this.files[0].size;
+        if (filesize > 10000*1024) {
+            alert("请上传大小在500k以下的图片");
+            return false;
+        }
+        var files = this.files;
+        console.log(files);
+        for(var i=0;files.length;i++){
+            var picname = files[i].name;
+            var reader = new FileReader();
+            reader.onload = function(e){
+                var src = e.target.result;
+                $.ajax({
+                    type:"post",
+                    url:"{:U('Meet/uploadPic')}",
+                    data: {"pic":src,"pic_name":picname},
+                    dataType : "json",
+                    success : function(data){
+                        if(data['flag'] == "success"){
+                            $("#imgPreviewMore").append(" <div class='parents'><div class='one_del'>[-]</div><input type='hidden' value='"+data['data']['path']+"' name='logo'/>"+
+                                    "<div><img src='"+data['data']['path']+"' style='width: 150px;'></div></div>");
+                            bindClick();
+                        }
+                    }
+                });
+            }
+            reader.readAsDataURL(files[i]);
+        }
+    });
+    /**删除头像方法*/
+    function bindClick() {
+        $(".one_del").off("click");
+        $(".one_del").click(function () {
+            $(this).parent().remove();
+        })
+    }
+    bindClick();
+
+</script>

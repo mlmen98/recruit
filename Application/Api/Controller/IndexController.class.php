@@ -3,103 +3,51 @@ namespace Api\Controller;
 use Think\Controller;
 class IndexController extends Controller {
 	public function _initialize(){
-		$this -> key = "AJ3BZ-EPVCQ-NEY5U-G5H5V-2THSH-XFFI4";//"AJ3BZ-EPVCQ-NEY5U-G5H5V-2THSH-XFFI4"; qq地图
 		$this -> searchurl = "https://apis.map.qq.com/ws/place/v1/search?";
-		$this -> history = M('history');
-        $this -> taphis = M('taphis');
-
-	}
-	//检索关键词
-	public function search(){
-		$data['uid'] = $_POST['uid'];
-        $data['keyword'] = $this -> filter_mark($_POST['keyword']);
-        $has = $this -> history -> where( $data ) -> limit(1) -> select();
-		$data['lat'] = $_POST['latitude'];
-		$data['lnt'] = $_POST['longitude'];
-        $distinct = $_POST['distinct'];
-        if (empty($distinct)) {
-            $distinct = 1000;
-        }
-		$data['ctime'] = time();
-		$data['status'] = 0;
-		
-		$where['keyword'] = urlencode($data['keyword']);
-		$where['boundary'] = "nearby(".$data['lat'].",".$data['lnt'].",$distinct)";
-		$where['key'] = $this -> key;
-
-		if (!empty($_POST['filter'])) {
-			$where['filter'] = $_POST['filter'];
-		}
-		$this -> searchurl = "https://apis.map.qq.com/ws/place/v1/search?keyword=".$where['keyword']."&boundary=nearby(".$data['lat'].",".$data['lnt'].",$distinct)&key=".$where['key'];
-		$res1 = json_decode($this -> curl( "" , $this -> searchurl , "get" ),true);
-		if ($res1['status']==110) {
-			$res1['url']= $this -> searchurl;
-		}elseif ($res1['status']==0 && $res1['count']>0) {
-            if (!empty($has)) {
-                $res = $this -> history -> where('id='.$has[0]['id'])->setInc('num');
-            }else {
-                $res = $this -> history -> add( $data );
-            }
-            if ($has[0]['status'] == 9) {
-                $newdata['id'] = $has[0]['id'];
-                $newdata['status'] = 0;
-                $res = $this -> history -> save( $newdata );
-            }
-		}
-		print json_encode($res1);
+		$this -> claobj = M('Class');
+        $this -> meetfcla = M('Meetforclass');
 	}
 
-    public function putTaphis(){
-        $data['uid'] = $_POST['uid'];
-        $data['title'] = $_POST['title'];
-        $data['lat'] = $_POST['lat'];
-        $data['lnt'] = $_POST['lnt'];
-        $data['address'] = $_POST['address'];
-        $data['status'] = 0;
-        $data['ctime'] = time();
-        $res = $this -> taphis -> add($data);
+
+    public function getclass(){
+        $w['status'] = array('neq',9);
+        $res = $this -> meetfcla -> where($w) -> select();
         if (!empty($res)) {
-            apiResponse("success","插入成功！");
+            apiResponse("success","请求成功！",$res);
         }else{
-            apiResponse("error","插入失败！");
+            apiResponse("error","数据为空！");
         }
     }
 
-    //删除历史记录
-    public function removehis(){
-        $where['uid'] = $_POST['uid'];
-        $data['keyword'] = $this -> filter_mark($_POST['keyword']);
-        $data['status'] = 9;
-        $res = $this -> history ->where($where)->save($data);
-        if (!empty($res)) {
-            apiResponse("success","删除成功！");
-        }else{
-            apiResponse("error","删除失败！");
+    public function getmeet(){
+        $w['status'] = array('neq',9);
+        if (!empty($_POST['class_id'])) {
+            $w['class_id'] = $_POST['class_id'];
         }
-    }   
+        $p = 1;
+        if (!empty($_POST['p'])) {
+            $p = $_POST['p'];
+        }
 
-	//添加新的标注点
-	public function addMarker(){
-		$data['uid'] = $_POST['uid'];
-		$data['lat'] = $_POST['lat'];
-		$data['lnt'] = $_POST['lnt'];
-		$data['address'] = $_POST['address'];
-		$data['photo'] = $_POST['photo'];
-		$data['remark'] = $_POST['remark'];
-		$data['keyword'] = $this -> filter_mark($_POST['keyword']);
-		$data['ctime'] = time();
-		$data['status'] = 0;
-		$data['type'] = "";
-		$markets = M('markets');
+        $res = $this -> meetfcla -> where( $w ) -> limit(($p-1)*15,15) -> select();
+        if (!empty( $res )) {
+            apiResponse("success","请求成功！",$res);
+        }else{
+            apiResponse("error","数据为空！");
+        }
 
-		$res = $markets -> add( $data );
+    }
 
-		if (!empty($res)) {
-			apiResponse("success","等待审核！",$data);
-		}else{
-			apiResponse("error","上传失败！");
-		}
-	}
+    public function getpic(){
+        $pic = M('Pic');
+        $w['status'] = array('neq' => 9);
+        $res = $pic -> where($w) -> select();
+        if (!empty( $res )) {
+            apiResponse("success","请求成功！",$res);
+        }else{
+            apiResponse("error","数据为空！");
+        }
+    }
 
 
 	//去除中英文标点符号
